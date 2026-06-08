@@ -22,17 +22,10 @@ jobs:
         run: python -m pip install pyinstaller
       - name: Build Windows exe
         run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_windows keyboard_relay_gui.pyw
-      - name: Package Windows release
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force release/windows | Out-Null
-          Copy-Item dist/keyboard_simulation_windows.exe release/windows/
-          Copy-Item README.md release/windows/
-          Compress-Archive -Path release/windows/* -DestinationPath keyboard_simulation_windows.zip
       - uses: actions/upload-artifact@v4
         with:
           name: keyboard_simulation_windows
-          path: keyboard_simulation_windows.zip
+          path: dist/keyboard_simulation_windows.exe
 
   macos:
     name: keyboard_simulation_macos
@@ -48,14 +41,11 @@ jobs:
         run: pyinstaller --noconfirm --clean --windowed --name keyboard_simulation_macos keyboard_relay.py
       - name: Package macOS release
         run: |
-          mkdir -p release/macos
-          cp -R dist/keyboard_simulation_macos.app release/macos/
-          cp README.md release/macos/
-          ditto -c -k --sequesterRsrc --keepParent release/macos keyboard_simulation_macos.zip
+          hdiutil create -volname keyboard_simulation_macos -srcfolder dist/keyboard_simulation_macos.app -ov -format UDZO keyboard_simulation_macos.dmg
       - uses: actions/upload-artifact@v4
         with:
           name: keyboard_simulation_macos
-          path: keyboard_simulation_macos.zip
+          path: keyboard_simulation_macos.dmg
 
   linux:
     name: keyboard_simulation_linux
@@ -71,17 +61,13 @@ jobs:
         run: python -m pip install pyinstaller pynput
       - name: Build Linux executable
         run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_linux keyboard_relay.py
-      - name: Package Linux release
+      - name: Prepare Linux executable
         run: |
-          mkdir -p release/linux
-          cp dist/keyboard_simulation_linux release/linux/
-          cp README.md release/linux/
-          chmod +x release/linux/keyboard_simulation_linux
-          zip -r keyboard_simulation_linux.zip release/linux
+          chmod +x dist/keyboard_simulation_linux
       - uses: actions/upload-artifact@v4
         with:
           name: keyboard_simulation_linux
-          path: keyboard_simulation_linux.zip
+          path: dist/keyboard_simulation_linux
 
   android:
     name: keyboard_simulation_android
@@ -97,16 +83,13 @@ jobs:
       - name: Build Android APK
         working-directory: android
         run: gradle assembleRelease
-      - name: Package Android release
+      - name: Prepare Android APK
         run: |
-          mkdir -p release/android
-          cp android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/keyboard_simulation_android.apk
-          cp README.md release/android/
-          zip -r keyboard_simulation_android.zip release/android
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk keyboard_simulation_android.apk
       - uses: actions/upload-artifact@v4
         with:
           name: keyboard_simulation_android
-          path: keyboard_simulation_android.zip
+          path: keyboard_simulation_android.apk
 
   release:
     name: Create GitHub releases
@@ -121,13 +104,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          for os in windows macos linux android; do
+          for item in \
+            "windows:keyboard_simulation_windows.exe" \
+            "macos:keyboard_simulation_macos.dmg" \
+            "linux:keyboard_simulation_linux" \
+            "android:keyboard_simulation_android.apk"; do
+            os="${item%%:*}"
+            asset="${item#*:}"
             name="keyboard_simulation_${os}"
             tag="${name}"
-            zip_path="artifacts/${name}/${name}.zip"
+            asset_path="artifacts/${name}/${asset}"
             if gh release view "$tag" >/dev/null 2>&1; then
-              gh release upload "$tag" "$zip_path" --clobber
+              gh release upload "$tag" "$asset_path" --clobber
             else
-              gh release create "$tag" "$zip_path" --title "$name" --notes "Automated ${os} build for Keyboard Immulation."
+              gh release create "$tag" "$asset_path" --title "$name" --notes "Automated ${os} application build for Keyboard Simulation."
             fi
           done

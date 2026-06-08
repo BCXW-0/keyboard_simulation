@@ -5,43 +5,22 @@ $releaseDir = Join-Path $root "release"
 
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
-$windowsZip = Join-Path $releaseDir "keyboard_simulation_windows.zip"
-$macosZip = Join-Path $releaseDir "keyboard_simulation_macos.zip"
-$linuxZip = Join-Path $releaseDir "keyboard_simulation_linux.zip"
-$androidZip = Join-Path $releaseDir "keyboard_simulation_android.zip"
-$stagingDir = Join-Path $releaseDir "staging"
-$windowsStaging = Join-Path $stagingDir "windows"
-$desktopStaging = Join-Path $stagingDir "desktop"
-$androidStaging = Join-Path $stagingDir "android"
+$windowsExeAsset = Join-Path $releaseDir "keyboard_simulation_windows.exe"
+$macosReadme = Join-Path $releaseDir "keyboard_simulation_macos.requires-macos-build.txt"
+$linuxReadme = Join-Path $releaseDir "keyboard_simulation_linux.requires-linux-build.txt"
+$androidReadme = Join-Path $releaseDir "keyboard_simulation_android.requires-android-build.txt"
 
-Remove-Item $windowsZip, $macosZip, $linuxZip, $androidZip -Force -ErrorAction SilentlyContinue
-Remove-Item $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
-
-New-Item -ItemType Directory -Force -Path $windowsStaging, $desktopStaging, $androidStaging | Out-Null
+Remove-Item (Join-Path $releaseDir "keyboard_simulation_*") -Force -ErrorAction SilentlyContinue
 
 $windowsExe = Get-ChildItem (Join-Path $root "dist") -Filter "*.exe" | Select-Object -First 1
 if (-not $windowsExe) {
   throw "Windows executable was not found under dist"
 }
 
-Copy-Item $windowsExe.FullName (Join-Path $windowsStaging "keyboard_simulation_windows.exe")
-Copy-Item (Join-Path $root "README.md") $windowsStaging
+Copy-Item $windowsExe.FullName $windowsExeAsset
 
-Compress-Archive -Path (Join-Path $windowsStaging "*") -DestinationPath $windowsZip
-
-Copy-Item (Join-Path $root "keyboard_relay.py") $desktopStaging
-Copy-Item (Join-Path $root "keyboard_relay_gui.pyw") $desktopStaging
-Copy-Item (Join-Path $root "run.sh") $desktopStaging
-Copy-Item (Join-Path $root "requirements.txt") $desktopStaging
-Copy-Item (Join-Path $root "README.md") $desktopStaging
-
-Compress-Archive -Path (Join-Path $desktopStaging "*") -DestinationPath $macosZip
-
-Compress-Archive -Path (Join-Path $desktopStaging "*") -DestinationPath $linuxZip
-
-Copy-Item (Join-Path $root "android") $androidStaging -Recurse
-Copy-Item (Join-Path $root "README.md") $androidStaging
-
-Compress-Archive -Path (Join-Path $androidStaging "*") -DestinationPath $androidZip
+Set-Content -Path $macosReadme -Encoding UTF8 -Value "Build keyboard_simulation_macos.dmg on macOS with GitHub Actions or PyInstaller."
+Set-Content -Path $linuxReadme -Encoding UTF8 -Value "Build keyboard_simulation_linux on Linux with GitHub Actions or PyInstaller."
+Set-Content -Path $androidReadme -Encoding UTF8 -Value "Build keyboard_simulation_android.apk with Android SDK/Gradle or GitHub Actions."
 
 Get-ChildItem $releaseDir -Filter "keyboard_simulation_*" | Select-Object Name, Length

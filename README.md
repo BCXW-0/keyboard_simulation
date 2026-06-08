@@ -185,12 +185,12 @@ Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [andr
 
 | 系统 | Release / 资产名称 |
 | --- | --- |
-| Windows | `keyboard_simulation_windows` |
-| macOS | `keyboard_simulation_macos` |
+| Windows | `keyboard_simulation_windows.exe` |
+| macOS | `keyboard_simulation_macos.dmg` |
 | Linux | `keyboard_simulation_linux` |
-| Android | `keyboard_simulation_android` |
+| Android | `keyboard_simulation_android.apk` |
 
-release 资产可以是 `.zip`、`.tar.gz`、`.exe`、`.dmg`、`.AppImage` 或 `.apk`，按目标系统实际构建结果选择。
+release 资产应直接发布应用程序或安装包本体，而不是压缩包。
 
 仓库已提供 GitHub Actions 工作流 [build-releases.yml](.github/workflows/build-releases.yml)，可以在对应系统 runner 上原生构建 Windows、macOS、Linux 和 Android 产物，并创建对应 release。
 
