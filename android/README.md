@@ -1,11 +1,11 @@
-# Keyboard Immulation Android
+# Keyboard Simulation Android
 
 Android 版本采用原生软键盘实现，不复用桌面端 Tkinter 或桌面键盘模拟。
 
 当前目录包含一个最小 Android 输入法工程，核心服务是：
 
 ```text
-app/src/main/java/com/keyboardimmulation/ime/KeyboardImmulationImeService.java
+app/src/main/java/com/keyboardsimulation/ime/KeyboardSimulationImeService.java
 ```
 
 它基于 `InputMethodService` 创建输入法面板，并通过当前输入框的 `InputConnection` 发送文本。
@@ -45,7 +45,7 @@ Windows 下：
 ## 使用
 
 1. 安装生成的 APK。
-2. 在 Android 系统设置中启用 `Keyboard Immulation` 输入法。
+2. 在 Android 系统设置中启用 `Keyboard Simulation` 输入法。
 3. 切换到该输入法。
 4. 在输入法面板中输入待输出文本。
 5. 设置延迟、间隔和程序输入模式。
@@ -56,18 +56,17 @@ Windows 下：
 Android release 命名：
 
 ```text
-keyboard_immulation_android
+keyboard_simulation_android
 ```
 
 资产建议：
 
 ```text
-keyboard_immulation_android.apk
+keyboard_simulation_android.apk
 ```
 
 如果当前构建环境没有 Android SDK，可以先发布源码压缩包：
 
 ```text
-keyboard_immulation_android.zip
+keyboard_simulation_android.zip
 ```
-

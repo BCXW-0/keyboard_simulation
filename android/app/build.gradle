@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.keyboardimmulation.ime"
+    namespace "com.keyboardsimulation.ime"
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.keyboardimmulation.ime"
+        applicationId "com.keyboardsimulation.ime"
         minSdk 23
         targetSdk 35
         versionCode 1

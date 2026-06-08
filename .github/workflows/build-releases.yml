@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - "keyboard_immulation_*"
+      - "keyboard_simulation_*"
 
 permissions:
   contents: write
 
 jobs:
   windows:
-    name: keyboard_immulation_windows
+    name: keyboard_simulation_windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,21 +21,21 @@ jobs:
       - name: Install dependencies
         run: python -m pip install pyinstaller
       - name: Build Windows exe
-        run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_immulation_windows keyboard_relay_gui.pyw
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_windows keyboard_relay_gui.pyw
       - name: Package Windows release
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force release/windows | Out-Null
-          Copy-Item dist/keyboard_immulation_windows.exe release/windows/
+          Copy-Item dist/keyboard_simulation_windows.exe release/windows/
           Copy-Item README.md release/windows/
-          Compress-Archive -Path release/windows/* -DestinationPath keyboard_immulation_windows.zip
+          Compress-Archive -Path release/windows/* -DestinationPath keyboard_simulation_windows.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: keyboard_immulation_windows
-          path: keyboard_immulation_windows.zip
+          name: keyboard_simulation_windows
+          path: keyboard_simulation_windows.zip
 
   macos:
-    name: keyboard_immulation_macos
+    name: keyboard_simulation_macos
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,20 +45,20 @@ jobs:
       - name: Install dependencies
         run: python -m pip install pyinstaller pynput
       - name: Build macOS app
-        run: pyinstaller --noconfirm --clean --windowed --name keyboard_immulation_macos keyboard_relay.py
+        run: pyinstaller --noconfirm --clean --windowed --name keyboard_simulation_macos keyboard_relay.py
       - name: Package macOS release
         run: |
           mkdir -p release/macos
-          cp -R dist/keyboard_immulation_macos.app release/macos/
+          cp -R dist/keyboard_simulation_macos.app release/macos/
           cp README.md release/macos/
-          ditto -c -k --sequesterRsrc --keepParent release/macos keyboard_immulation_macos.zip
+          ditto -c -k --sequesterRsrc --keepParent release/macos keyboard_simulation_macos.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: keyboard_immulation_macos
-          path: keyboard_immulation_macos.zip
+          name: keyboard_simulation_macos
+          path: keyboard_simulation_macos.zip
 
   linux:
-    name: keyboard_immulation_linux
+    name: keyboard_simulation_linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,21 +70,21 @@ jobs:
       - name: Install Python dependencies
         run: python -m pip install pyinstaller pynput
       - name: Build Linux executable
-        run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_immulation_linux keyboard_relay.py
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_linux keyboard_relay.py
       - name: Package Linux release
         run: |
           mkdir -p release/linux
-          cp dist/keyboard_immulation_linux release/linux/
+          cp dist/keyboard_simulation_linux release/linux/
           cp README.md release/linux/
-          chmod +x release/linux/keyboard_immulation_linux
-          zip -r keyboard_immulation_linux.zip release/linux
+          chmod +x release/linux/keyboard_simulation_linux
+          zip -r keyboard_simulation_linux.zip release/linux
       - uses: actions/upload-artifact@v4
         with:
-          name: keyboard_immulation_linux
-          path: keyboard_immulation_linux.zip
+          name: keyboard_simulation_linux
+          path: keyboard_simulation_linux.zip
 
   android:
-    name: keyboard_immulation_android
+    name: keyboard_simulation_android
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -100,13 +100,13 @@ jobs:
       - name: Package Android release
         run: |
           mkdir -p release/android
-          cp android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/keyboard_immulation_android.apk
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/keyboard_simulation_android.apk
           cp README.md release/android/
-          zip -r keyboard_immulation_android.zip release/android
+          zip -r keyboard_simulation_android.zip release/android
       - uses: actions/upload-artifact@v4
         with:
-          name: keyboard_immulation_android
-          path: keyboard_immulation_android.zip
+          name: keyboard_simulation_android
+          path: keyboard_simulation_android.zip
 
   release:
     name: Create GitHub releases
@@ -122,7 +122,7 @@ jobs:
         run: |
           set -e
           for os in windows macos linux android; do
-            name="keyboard_immulation_${os}"
+            name="keyboard_simulation_${os}"
             tag="${name}"
             zip_path="artifacts/${name}/${name}.zip"
             if gh release view "$tag" >/dev/null 2>&1; then

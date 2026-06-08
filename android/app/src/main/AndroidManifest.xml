@@ -8,7 +8,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
-            android:name=".KeyboardImmulationImeService"
+            android:name=".KeyboardSimulationImeService"
             android:exported="true"
             android:label="@string/ime_name"
             android:permission="android.permission.BIND_INPUT_METHOD">

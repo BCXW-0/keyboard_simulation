@@ -5,10 +5,10 @@ $releaseDir = Join-Path $root "release"
 
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
-$windowsZip = Join-Path $releaseDir "keyboard_immulation_windows.zip"
-$macosZip = Join-Path $releaseDir "keyboard_immulation_macos.zip"
-$linuxZip = Join-Path $releaseDir "keyboard_immulation_linux.zip"
-$androidZip = Join-Path $releaseDir "keyboard_immulation_android.zip"
+$windowsZip = Join-Path $releaseDir "keyboard_simulation_windows.zip"
+$macosZip = Join-Path $releaseDir "keyboard_simulation_macos.zip"
+$linuxZip = Join-Path $releaseDir "keyboard_simulation_linux.zip"
+$androidZip = Join-Path $releaseDir "keyboard_simulation_android.zip"
 $stagingDir = Join-Path $releaseDir "staging"
 $windowsStaging = Join-Path $stagingDir "windows"
 $desktopStaging = Join-Path $stagingDir "desktop"
@@ -24,7 +24,7 @@ if (-not $windowsExe) {
   throw "Windows executable was not found under dist"
 }
 
-Copy-Item $windowsExe.FullName (Join-Path $windowsStaging "keyboard_immulation_windows.exe")
+Copy-Item $windowsExe.FullName (Join-Path $windowsStaging "keyboard_simulation_windows.exe")
 Copy-Item (Join-Path $root "README.md") $windowsStaging
 
 Compress-Archive -Path (Join-Path $windowsStaging "*") -DestinationPath $windowsZip
@@ -44,4 +44,4 @@ Copy-Item (Join-Path $root "README.md") $androidStaging
 
 Compress-Archive -Path (Join-Path $androidStaging "*") -DestinationPath $androidZip
 
-Get-ChildItem $releaseDir -Filter "keyboard_immulation_*" | Select-Object Name, Length
+Get-ChildItem $releaseDir -Filter "keyboard_simulation_*" | Select-Object Name, Length

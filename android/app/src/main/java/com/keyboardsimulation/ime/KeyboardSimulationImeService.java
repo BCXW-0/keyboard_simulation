@@ -1,4 +1,4 @@
-package com.keyboardimmulation.ime;
+package com.keyboardsimulation.ime;
 
 import android.inputmethodservice.InputMethodService;
 import android.os.Handler;
@@ -14,7 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class KeyboardImmulationImeService extends InputMethodService {
+public class KeyboardSimulationImeService extends InputMethodService {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private EditText relayText;
     private EditText delayInput;
@@ -28,7 +28,7 @@ public class KeyboardImmulationImeService extends InputMethodService {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(10), dp(8), dp(10), dp(8));
-        root.setBackgroundResource(com.keyboardimmulation.ime.R.drawable.panel_background);
+        root.setBackgroundResource(com.keyboardsimulation.ime.R.drawable.panel_background);
 
         LinearLayout options = new LinearLayout(this);
         options.setOrientation(LinearLayout.HORIZONTAL);

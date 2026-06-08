@@ -1,4 +1,4 @@
-# Keyboard Immulation
+# Keyboard Simulation
 
 一个用于“不能直接粘贴文本”场景的跨平台键盘中转输入工具。
 
@@ -93,7 +93,7 @@ Linux 需要图形桌面环境和 Tkinter。部分发行版需要额外安装 `p
 Android 版本不使用 Tkinter。它应作为原生输入法安装到设备上：
 
 1. 安装 Android APK。
-2. 在系统输入法设置中启用 `Keyboard Immulation` 输入法。
+2. 在系统输入法设置中启用 `Keyboard Simulation` 输入法。
 3. 切换到该输入法。
 4. 在输入法界面输入或选择待输出文本。
 5. 由输入法调用当前输入框的 `InputConnection` 执行输入。
@@ -159,10 +159,10 @@ dist\键盘中转输入工具.exe
 
 ```bash
 python3 -m pip install pyinstaller pynput
-pyinstaller --noconfirm --clean --windowed --name keyboard_immulation_macos keyboard_relay.py
+pyinstaller --noconfirm --clean --windowed --name keyboard_simulation_macos keyboard_relay.py
 ```
 
-输出位于 `dist/keyboard_immulation_macos.app`。
+输出位于 `dist/keyboard_simulation_macos.app`。
 
 ### Linux 应用程序
 
@@ -170,10 +170,10 @@ pyinstaller --noconfirm --clean --windowed --name keyboard_immulation_macos keyb
 
 ```bash
 python3 -m pip install pyinstaller pynput
-pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_immulation_linux keyboard_relay.py
+pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_linux keyboard_relay.py
 ```
 
-输出位于 `dist/keyboard_immulation_linux`。
+输出位于 `dist/keyboard_simulation_linux`。
 
 ### Android APK
 
@@ -185,10 +185,10 @@ Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [andr
 
 | 系统 | Release / 资产名称 |
 | --- | --- |
-| Windows | `keyboard_immulation_windows` |
-| macOS | `keyboard_immulation_macos` |
-| Linux | `keyboard_immulation_linux` |
-| Android | `keyboard_immulation_android` |
+| Windows | `keyboard_simulation_windows` |
+| macOS | `keyboard_simulation_macos` |
+| Linux | `keyboard_simulation_linux` |
+| Android | `keyboard_simulation_android` |
 
 release 资产可以是 `.zip`、`.tar.gz`、`.exe`、`.dmg`、`.AppImage` 或 `.apk`，按目标系统实际构建结果选择。
 
