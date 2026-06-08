@@ -1,109 +1,13 @@
-import ctypes
+import platform
 import threading
 import time
 import tkinter as tk
 from tkinter import messagebox, ttk
 
 
-user32 = ctypes.WinDLL("user32", use_last_error=True)
-
-INPUT_KEYBOARD = 1
-KEYEVENTF_KEYUP = 0x0002
-KEYEVENTF_UNICODE = 0x0004
-VK_ESCAPE = 0x1B
-VK_RETURN = 0x0D
-VK_TAB = 0x09
-VK_SHIFT = 0x10
-VK_HOME = 0x24
-VK_DELETE = 0x2E
-
-ULONG_PTR = ctypes.c_ulonglong if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_ulong
-
-
-class KEYBDINPUT(ctypes.Structure):
-    _fields_ = (
-        ("wVk", ctypes.c_ushort),
-        ("wScan", ctypes.c_ushort),
-        ("dwFlags", ctypes.c_ulong),
-        ("time", ctypes.c_ulong),
-        ("dwExtraInfo", ULONG_PTR),
-    )
-
-
-class MOUSEINPUT(ctypes.Structure):
-    _fields_ = (
-        ("dx", ctypes.c_long),
-        ("dy", ctypes.c_long),
-        ("mouseData", ctypes.c_ulong),
-        ("dwFlags", ctypes.c_ulong),
-        ("time", ctypes.c_ulong),
-        ("dwExtraInfo", ULONG_PTR),
-    )
-
-
-class HARDWAREINPUT(ctypes.Structure):
-    _fields_ = (
-        ("uMsg", ctypes.c_ulong),
-        ("wParamL", ctypes.c_ushort),
-        ("wParamH", ctypes.c_ushort),
-    )
-
-
-class INPUT_UNION(ctypes.Union):
-    _fields_ = (
-        ("ki", KEYBDINPUT),
-        ("mi", MOUSEINPUT),
-        ("hi", HARDWAREINPUT),
-    )
-
-
-class INPUT(ctypes.Structure):
-    _fields_ = (("type", ctypes.c_ulong), ("union", INPUT_UNION))
-
-
-def _send_input(*inputs):
-    array_type = INPUT * len(inputs)
-    sent = user32.SendInput(len(inputs), array_type(*inputs), ctypes.sizeof(INPUT))
-    if sent != len(inputs):
-        raise ctypes.WinError(ctypes.get_last_error())
-
-
-def _keyboard_input(vk=0, scan=0, flags=0):
-    return INPUT(
-        type=INPUT_KEYBOARD,
-        union=INPUT_UNION(ki=KEYBDINPUT(vk, scan, flags, 0, 0)),
-    )
-
-
-def send_vk(vk):
-    _send_input(_keyboard_input(vk=vk), _keyboard_input(vk=vk, flags=KEYEVENTF_KEYUP))
-
-
-def send_shift_home_delete():
-    _send_input(
-        _keyboard_input(vk=VK_SHIFT),
-        _keyboard_input(vk=VK_HOME),
-        _keyboard_input(vk=VK_HOME, flags=KEYEVENTF_KEYUP),
-        _keyboard_input(vk=VK_SHIFT, flags=KEYEVENTF_KEYUP),
-    )
-    send_vk(VK_DELETE)
-
-
-def send_utf16_unit(unit):
-    _send_input(
-        _keyboard_input(scan=unit, flags=KEYEVENTF_UNICODE),
-        _keyboard_input(scan=unit, flags=KEYEVENTF_UNICODE | KEYEVENTF_KEYUP),
-    )
-
-
-def send_text_char(ch):
-    encoded = ch.encode("utf-16-le", errors="surrogatepass")
-    for index in range(0, len(encoded), 2):
-        send_utf16_unit(int.from_bytes(encoded[index : index + 2], "little"))
-
-
-def escape_is_down():
-    return bool(user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+KEY_ENTER = "enter"
+KEY_TAB = "tab"
+KEY_CLEAR_AUTO_INDENT = "clear_auto_indent"
 
 
 def iter_plain_output_actions(content, newline_mode, tab_mode):
@@ -111,9 +15,9 @@ def iter_plain_output_actions(content, newline_mode, tab_mode):
         if ch == "\r":
             continue
         if ch == "\n" and newline_mode == "enter":
-            yield ("vk", VK_RETURN)
+            yield ("key", KEY_ENTER)
         elif ch == "\t" and tab_mode == "key":
-            yield ("vk", VK_TAB)
+            yield ("key", KEY_TAB)
         else:
             yield ("char", ch)
 
@@ -129,7 +33,7 @@ def iter_output_actions(content, newline_mode, tab_mode, program_mode):
 def emit_text_actions(text, tab_mode):
     for ch in text:
         if ch == "\t" and tab_mode == "key":
-            yield ("vk", VK_TAB)
+            yield ("key", KEY_TAB)
         else:
             yield ("char", ch)
 
@@ -143,9 +47,186 @@ def iter_program_output_actions(content, tab_mode):
     yield from emit_text_actions(lines[0], tab_mode)
 
     for index in range(1, len(lines)):
-        yield ("vk", VK_RETURN)
-        yield ("clear_auto_indent", None)
+        yield ("key", KEY_ENTER)
+        yield ("key", KEY_CLEAR_AUTO_INDENT)
         yield from emit_text_actions(lines[index], tab_mode)
+
+
+class KeyboardBackend:
+    name = "unknown"
+
+    def send_char(self, ch):
+        raise NotImplementedError
+
+    def send_key(self, key_name):
+        raise NotImplementedError
+
+    def escape_is_down(self):
+        return False
+
+    def close(self):
+        pass
+
+
+class WindowsKeyboardBackend(KeyboardBackend):
+    name = "Windows SendInput"
+
+    def __init__(self):
+        import ctypes
+
+        self.ctypes = ctypes
+        self.user32 = ctypes.WinDLL("user32", use_last_error=True)
+        self.INPUT_KEYBOARD = 1
+        self.KEYEVENTF_KEYUP = 0x0002
+        self.KEYEVENTF_UNICODE = 0x0004
+        self.VK_ESCAPE = 0x1B
+        self.VK_RETURN = 0x0D
+        self.VK_TAB = 0x09
+        self.VK_SHIFT = 0x10
+        self.VK_HOME = 0x24
+        self.VK_DELETE = 0x2E
+        self.ULONG_PTR = ctypes.c_ulonglong if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_ulong
+
+        backend = self
+
+        class KEYBDINPUT(ctypes.Structure):
+            _fields_ = (
+                ("wVk", ctypes.c_ushort),
+                ("wScan", ctypes.c_ushort),
+                ("dwFlags", ctypes.c_ulong),
+                ("time", ctypes.c_ulong),
+                ("dwExtraInfo", backend.ULONG_PTR),
+            )
+
+        class MOUSEINPUT(ctypes.Structure):
+            _fields_ = (
+                ("dx", ctypes.c_long),
+                ("dy", ctypes.c_long),
+                ("mouseData", ctypes.c_ulong),
+                ("dwFlags", ctypes.c_ulong),
+                ("time", ctypes.c_ulong),
+                ("dwExtraInfo", backend.ULONG_PTR),
+            )
+
+        class HARDWAREINPUT(ctypes.Structure):
+            _fields_ = (
+                ("uMsg", ctypes.c_ulong),
+                ("wParamL", ctypes.c_ushort),
+                ("wParamH", ctypes.c_ushort),
+            )
+
+        class INPUT_UNION(ctypes.Union):
+            _fields_ = (
+                ("ki", KEYBDINPUT),
+                ("mi", MOUSEINPUT),
+                ("hi", HARDWAREINPUT),
+            )
+
+        class INPUT(ctypes.Structure):
+            _fields_ = (("type", ctypes.c_ulong), ("union", INPUT_UNION))
+
+        self.KEYBDINPUT = KEYBDINPUT
+        self.INPUT_UNION = INPUT_UNION
+        self.INPUT = INPUT
+
+    def _keyboard_input(self, vk=0, scan=0, flags=0):
+        return self.INPUT(
+            type=self.INPUT_KEYBOARD,
+            union=self.INPUT_UNION(ki=self.KEYBDINPUT(vk, scan, flags, 0, 0)),
+        )
+
+    def _send_input(self, *inputs):
+        array_type = self.INPUT * len(inputs)
+        sent = self.user32.SendInput(len(inputs), array_type(*inputs), self.ctypes.sizeof(self.INPUT))
+        if sent != len(inputs):
+            raise self.ctypes.WinError(self.ctypes.get_last_error())
+
+    def _send_vk(self, vk):
+        self._send_input(self._keyboard_input(vk=vk), self._keyboard_input(vk=vk, flags=self.KEYEVENTF_KEYUP))
+
+    def _send_shift_home_delete(self):
+        self._send_input(
+            self._keyboard_input(vk=self.VK_SHIFT),
+            self._keyboard_input(vk=self.VK_HOME),
+            self._keyboard_input(vk=self.VK_HOME, flags=self.KEYEVENTF_KEYUP),
+            self._keyboard_input(vk=self.VK_SHIFT, flags=self.KEYEVENTF_KEYUP),
+        )
+        self._send_vk(self.VK_DELETE)
+
+    def _send_utf16_unit(self, unit):
+        self._send_input(
+            self._keyboard_input(scan=unit, flags=self.KEYEVENTF_UNICODE),
+            self._keyboard_input(scan=unit, flags=self.KEYEVENTF_UNICODE | self.KEYEVENTF_KEYUP),
+        )
+
+    def send_char(self, ch):
+        encoded = ch.encode("utf-16-le", errors="surrogatepass")
+        for index in range(0, len(encoded), 2):
+            self._send_utf16_unit(int.from_bytes(encoded[index : index + 2], "little"))
+
+    def send_key(self, key_name):
+        if key_name == KEY_ENTER:
+            self._send_vk(self.VK_RETURN)
+        elif key_name == KEY_TAB:
+            self._send_vk(self.VK_TAB)
+        elif key_name == KEY_CLEAR_AUTO_INDENT:
+            self._send_shift_home_delete()
+        else:
+            raise ValueError(f"Unsupported key action: {key_name}")
+
+    def escape_is_down(self):
+        return bool(self.user32.GetAsyncKeyState(self.VK_ESCAPE) & 0x8000)
+
+
+class PynputKeyboardBackend(KeyboardBackend):
+    def __init__(self):
+        try:
+            from pynput import keyboard
+        except ImportError as exc:
+            raise RuntimeError("macOS/Linux 需要先安装 pynput：python3 -m pip install pynput") from exc
+
+        self.keyboard = keyboard
+        self.controller = keyboard.Controller()
+        self.name = f"{platform.system()} pynput"
+
+    def send_char(self, ch):
+        self.controller.type(ch)
+
+    def send_key(self, key_name):
+        key = self.keyboard.Key
+        if key_name == KEY_ENTER:
+            self.controller.press(key.enter)
+            self.controller.release(key.enter)
+        elif key_name == KEY_TAB:
+            self.controller.press(key.tab)
+            self.controller.release(key.tab)
+        elif key_name == KEY_CLEAR_AUTO_INDENT:
+            self._clear_auto_indent()
+        else:
+            raise ValueError(f"Unsupported key action: {key_name}")
+
+    def _clear_auto_indent(self):
+        key = self.keyboard.Key
+        system = platform.system()
+        if system == "Darwin":
+            with self.controller.pressed(key.shift):
+                with self.controller.pressed(key.cmd):
+                    self.controller.press(key.left)
+                    self.controller.release(key.left)
+        else:
+            with self.controller.pressed(key.shift):
+                self.controller.press(key.home)
+                self.controller.release(key.home)
+        self.controller.press(key.delete)
+        self.controller.release(key.delete)
+
+
+def create_keyboard_backend():
+    if platform.system() == "Windows":
+        return WindowsKeyboardBackend()
+    if platform.system() in ("Darwin", "Linux"):
+        return PynputKeyboardBackend()
+    raise RuntimeError(f"暂不支持当前系统：{platform.system()}")
 
 
 class RelayApp(tk.Tk):
@@ -164,6 +245,12 @@ class RelayApp(tk.Tk):
         self.tab_mode_var = tk.StringVar(value="unicode")
         self.program_mode_var = tk.BooleanVar(value=False)
         self.status_var = tk.StringVar(value="输入内容后点击开始，3 秒内切到目标位置。Esc 可中断。")
+
+        try:
+            self.keyboard_backend = create_keyboard_backend()
+        except Exception as exc:
+            self.keyboard_backend = None
+            self.status_var.set(str(exc))
 
         self._build_ui()
 
@@ -213,6 +300,11 @@ class RelayApp(tk.Tk):
             variable=self.program_mode_var,
         ).grid(row=1, column=0, columnspan=3, sticky="w", pady=(0, 8))
 
+        backend_name = self.keyboard_backend.name if self.keyboard_backend else "不可用"
+        ttk.Label(options, text=f"输入后端: {backend_name}").grid(
+            row=1, column=3, columnspan=5, sticky="w", pady=(0, 8)
+        )
+
         text_frame = ttk.Frame(root)
         text_frame.grid(row=1, column=0, sticky="nsew")
         text_frame.columnconfigure(0, weight=1)
@@ -239,6 +331,9 @@ class RelayApp(tk.Tk):
 
     def start(self):
         if self.worker and self.worker.is_alive():
+            return
+        if not self.keyboard_backend:
+            messagebox.showerror("后端不可用", self.status_var.get())
             return
 
         content = self.text.get("1.0", "end-1c")
@@ -280,19 +375,16 @@ class RelayApp(tk.Tk):
             if self.stop_event.is_set():
                 return
 
-            total = len(content)
             sent = 0
             for action, value in iter_output_actions(content, newline_mode, tab_mode, program_mode):
-                if self.stop_event.is_set() or escape_is_down():
+                if self.stop_event.is_set() or self.keyboard_backend.escape_is_down():
                     self.stop_event.set()
                     break
 
-                if action == "vk":
-                    send_vk(value)
-                elif action == "clear_auto_indent":
-                    send_shift_home_delete()
+                if action == "key":
+                    self.keyboard_backend.send_key(value)
                 else:
-                    send_text_char(value)
+                    self.keyboard_backend.send_char(value)
 
                 sent += 1
                 if sent % 25 == 0:

@@ -1,0 +1,2 @@
+pynput>=1.8.0; platform_system != "Windows"
+pyinstaller>=6.0; platform_system == "Windows"
