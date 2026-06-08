@@ -177,7 +177,7 @@ pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_
 
 ### Android APK
 
-Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [android/](android/) 目录已经包含最小原生输入法工程，可在 Android Studio 中打开并构建。
+Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [android/](android/) 目录已经包含最小原生输入法工程，可在 Android Studio 中打开并构建。GitHub Actions 当前发布 debug-signed APK，便于直接安装测试；正式发布应改为 release 签名。
 
 ## Release 命名
 

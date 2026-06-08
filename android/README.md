@@ -28,19 +28,21 @@ app/src/main/java/com/keyboardsimulation/ime/KeyboardSimulationImeService.java
 
 需要 Android Studio 或本机 Android SDK/Gradle 环境。
 
-在 `android` 目录下执行：
+在 `android` 目录下执行可直接安装测试的 debug APK：
 
 ```bash
-./gradlew assembleRelease
+./gradlew assembleDebug
 ```
 
 Windows 下：
 
 ```powershell
-.\gradlew.bat assembleRelease
+.\gradlew.bat assembleDebug
 ```
 
 如果没有 Gradle Wrapper，可以在 Android Studio 中打开 `android` 目录，让 Android Studio 同步并构建工程。
+
+当前 GitHub Actions 发布的 `keyboard_simulation_android.apk` 使用 debug 签名，便于直接安装测试。正式发布时应改为 release 签名，并通过 GitHub Secrets 注入 keystore。
 
 ## 使用
 

@@ -109,9 +109,9 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Build Android APK
         working-directory: android
-        run: gradle assembleRelease
+        run: gradle assembleDebug
       - name: Prepare Android APK
-        run: cp android/app/build/outputs/apk/release/app-release-unsigned.apk keyboard_simulation_android.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk keyboard_simulation_android.apk
       - name: Create/update Android release
         env:
           GH_TOKEN: ${{ github.token }}
