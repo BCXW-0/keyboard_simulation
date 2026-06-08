@@ -177,7 +177,7 @@ pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_simulation_
 
 ### Android APK
 
-Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [android/](android/) 目录已经包含最小原生输入法工程，可在 Android Studio 中打开并构建。GitHub Actions 当前发布 debug-signed APK，便于直接安装测试；正式发布应改为 release 签名。
+Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [android/](android/) 目录已经包含最小原生输入法工程，可在 Android Studio 中打开并构建。测试安装可使用 debug 签名 APK；正式发布应改为 release 签名。
 
 ## Release 命名
 
@@ -192,7 +192,7 @@ Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [andr
 
 release 资产应直接发布应用程序或安装包本体，而不是压缩包。
 
-仓库已提供 GitHub Actions 工作流 [build-releases.yml](.github/workflows/build-releases.yml)，可以在对应系统 runner 上原生构建 Windows、macOS、Linux 和 Android 产物，并创建对应 release。
+macOS 和 Linux 应在对应系统上原生构建应用程序。Windows 和 Android 也建议在对应工具链环境中本地构建后，再手动上传 release 资产。
 
 ## 项目文件
 

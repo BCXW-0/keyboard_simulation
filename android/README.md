@@ -42,7 +42,7 @@ Windows 下：
 
 如果没有 Gradle Wrapper，可以在 Android Studio 中打开 `android` 目录，让 Android Studio 同步并构建工程。
 
-当前 GitHub Actions 发布的 `keyboard_simulation_android.apk` 使用 debug 签名，便于直接安装测试。正式发布时应改为 release 签名，并通过 GitHub Secrets 注入 keystore。
+测试安装可使用 debug 签名 APK。正式发布时应改为 release 签名，并妥善保存 keystore。
 
 ## 使用
 
