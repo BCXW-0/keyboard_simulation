@@ -2,9 +2,6 @@ name: Build platform releases
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "keyboard_simulation_*"
 
 permissions:
   contents: write
@@ -15,7 +12,6 @@ env:
 jobs:
   windows:
     name: keyboard_simulation_windows
-    if: github.event_name == 'workflow_dispatch' || github.ref_name == 'keyboard_simulation_windows'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +37,6 @@ jobs:
 
   macos:
     name: keyboard_simulation_macos
-    if: github.event_name == 'workflow_dispatch' || github.ref_name == 'keyboard_simulation_macos'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +63,6 @@ jobs:
 
   linux:
     name: keyboard_simulation_linux
-    if: github.event_name == 'workflow_dispatch' || github.ref_name == 'keyboard_simulation_linux'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -97,7 +91,6 @@ jobs:
 
   android:
     name: keyboard_simulation_android
-    if: github.event_name == 'workflow_dispatch' || github.ref_name == 'keyboard_simulation_android'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
