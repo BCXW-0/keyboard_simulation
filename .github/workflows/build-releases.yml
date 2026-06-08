@@ -1,0 +1,133 @@
+name: Build platform releases
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "keyboard_immulation_*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: keyboard_immulation_windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install pyinstaller
+      - name: Build Windows exe
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_immulation_windows keyboard_relay_gui.pyw
+      - name: Package Windows release
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release/windows | Out-Null
+          Copy-Item dist/keyboard_immulation_windows.exe release/windows/
+          Copy-Item README.md release/windows/
+          Compress-Archive -Path release/windows/* -DestinationPath keyboard_immulation_windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keyboard_immulation_windows
+          path: keyboard_immulation_windows.zip
+
+  macos:
+    name: keyboard_immulation_macos
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install pyinstaller pynput
+      - name: Build macOS app
+        run: pyinstaller --noconfirm --clean --windowed --name keyboard_immulation_macos keyboard_relay.py
+      - name: Package macOS release
+        run: |
+          mkdir -p release/macos
+          cp -R dist/keyboard_immulation_macos.app release/macos/
+          cp README.md release/macos/
+          ditto -c -k --sequesterRsrc --keepParent release/macos keyboard_immulation_macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keyboard_immulation_macos
+          path: keyboard_immulation_macos.zip
+
+  linux:
+    name: keyboard_immulation_linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+      - name: Install Python dependencies
+        run: python -m pip install pyinstaller pynput
+      - name: Build Linux executable
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_immulation_linux keyboard_relay.py
+      - name: Package Linux release
+        run: |
+          mkdir -p release/linux
+          cp dist/keyboard_immulation_linux release/linux/
+          cp README.md release/linux/
+          chmod +x release/linux/keyboard_immulation_linux
+          zip -r keyboard_immulation_linux.zip release/linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keyboard_immulation_linux
+          path: keyboard_immulation_linux.zip
+
+  android:
+    name: keyboard_immulation_android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+      - name: Build Android APK
+        working-directory: android
+        run: gradle assembleRelease
+      - name: Package Android release
+        run: |
+          mkdir -p release/android
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk release/android/keyboard_immulation_android.apk
+          cp README.md release/android/
+          zip -r keyboard_immulation_android.zip release/android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keyboard_immulation_android
+          path: keyboard_immulation_android.zip
+
+  release:
+    name: Create GitHub releases
+    needs: [windows, macos, linux, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Create/update platform releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          for os in windows macos linux android; do
+            name="keyboard_immulation_${os}"
+            tag="${name}"
+            zip_path="artifacts/${name}/${name}.zip"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "$zip_path" --clobber
+            else
+              gh release create "$tag" "$zip_path" --title "$name" --notes "Automated ${os} build for Keyboard Immulation."
+            fi
+          done

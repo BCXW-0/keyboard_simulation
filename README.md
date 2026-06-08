@@ -13,7 +13,7 @@ Android 端采用原生输入法思路：通过 Android `InputMethodService` 模
 | Windows | Python + Tkinter + Win32 `SendInput` | 已实现 |
 | macOS | Python + Tkinter + `pynput` | 已提供桌面端兼容实现 |
 | Linux | Python + Tkinter + `pynput` | 已提供桌面端兼容实现 |
-| Android | 原生输入法 `InputMethodService` | 提供项目骨架与实现方向 |
+| Android | 原生输入法 `InputMethodService` | 已提供最小原生输入法工程 |
 
 ## 功能特性
 
@@ -98,7 +98,7 @@ Android 版本不使用 Tkinter。它应作为原生输入法安装到设备上�
 4. 在输入法界面输入或选择待输出文本。
 5. 由输入法调用当前输入框的 `InputConnection` 执行输入。
 
-Android 项目说明见 [android/README.md](android/README.md)。
+Android 原生输入法工程见 [android/](android/)。
 
 ## 桌面端使用方法
 
@@ -153,29 +153,31 @@ py -3 -m PyInstaller --noconfirm --clean --onefile --windowed --name "键盘中�
 dist\键盘中转输入工具.exe
 ```
 
-### macOS 压缩包
+### macOS 应用程序
 
-在 macOS 上打包源码运行包：
-
-```bash
-zip -r keyboard_immulation_macos.zip keyboard_relay.py keyboard_relay_gui.pyw run.sh requirements.txt README.md
-```
-
-也可以在 macOS 本机使用 PyInstaller 生成 `.app` 或可执行文件。
-
-### Linux 压缩包
-
-在 Linux 上打包源码运行包：
+在 macOS 上使用 PyInstaller 原生构建 `.app`：
 
 ```bash
-zip -r keyboard_immulation_linux.zip keyboard_relay.py keyboard_relay_gui.pyw run.sh requirements.txt README.md
+python3 -m pip install pyinstaller pynput
+pyinstaller --noconfirm --clean --windowed --name keyboard_immulation_macos keyboard_relay.py
 ```
 
-也可以在 Linux 本机使用 PyInstaller 生成 ELF 可执行文件。
+输出位于 `dist/keyboard_immulation_macos.app`。
+
+### Linux 应用程序
+
+在 Linux 上使用 PyInstaller 原生构建可执行文件：
+
+```bash
+python3 -m pip install pyinstaller pynput
+pyinstaller --noconfirm --clean --onefile --windowed --name keyboard_immulation_linux keyboard_relay.py
+```
+
+输出位于 `dist/keyboard_immulation_linux`。
 
 ### Android APK
 
-Android APK 需要在 Android SDK/Gradle 环境中构建原生输入法项目。当前仓库提供 Android 目录作为原生输入法版本的工程入口与说明。
+Android APK 需要在 Android SDK/Gradle 环境中构建。当前仓库的 [android/](android/) 目录已经包含最小原生输入法工程，可在 Android Studio 中打开并构建。
 
 ## Release 命名
 
@@ -190,6 +192,8 @@ Android APK 需要在 Android SDK/Gradle 环境中构建原生输入法项目。
 
 release 资产可以是 `.zip`、`.tar.gz`、`.exe`、`.dmg`、`.AppImage` 或 `.apk`，按目标系统实际构建结果选择。
 
+仓库已提供 GitHub Actions 工作流 [build-releases.yml](.github/workflows/build-releases.yml)，可以在对应系统 runner 上原生构建 Windows、macOS、Linux 和 Android 产物，并创建对应 release。
+
 ## 项目文件
 
 | 文件 | 说明 |
@@ -199,7 +203,7 @@ release 资产可以是 `.zip`、`.tar.gz`、`.exe`、`.dmg`、`.AppImage` 或 `
 | `run.bat` | Windows 双击启动脚本 |
 | `run.sh` | macOS/Linux 启动脚本 |
 | `requirements.txt` | 桌面端 Python 依赖 |
-| `android/` | Android 原生输入法版本说明和工程入口 |
+| `android/` | Android 原生输入法工程 |
 | `README.md` | 项目说明 |
 | `dist\键盘中转输入工具.exe` | Windows 已打包窗口程序 |
 
