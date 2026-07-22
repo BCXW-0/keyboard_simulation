@@ -1,0 +1,14 @@
+﻿__pycache__/
+*.py[cod]
+*.pyo
+build/
+dist/
+.tools/
+release/
+_parts/
+_write_helper.py
+*.log
+*.spec.bak
+.DS_Store
+AGENTS.md
+RESTORED_PROJECT.md
